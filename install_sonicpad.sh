@@ -13,25 +13,49 @@
 #
 
 PROJECT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-SERVICE_NAME="polyorchestra"
 PYTHON_EXEC="/usr/bin/python3"
-
-DATA_DIR="/usr/data/printer_data"
-CONFIG_DIR="$DATA_DIR/config"
-LOG_DIR="$DATA_DIR/logs"
-LOG_FILE="$LOG_DIR/polyorchestra.log"
 
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${BLUE}=== POLYORCHESTRA™ SONIC PAD INSTALLATION ===${NC}"
+INSTANCE=$1
+LANG_CHOICE=$2
 
-echo -e "${GREEN}[1/5] Installing dependencies via pip...${NC}"
+SUFFIX=$INSTANCE
+[ "$INSTANCE" = "1" ] && SUFFIX=""
+
+DATA_DIR="/mnt/UDISK"
+CONFIG_DIR="$DATA_DIR/printer_config${SUFFIX}"
+LOG_DIR="$DATA_DIR/printer_log${SUFFIX}"
+LOG_FILE="$LOG_DIR/polyorchestra.log"
+MOONRAKER_CONF="$CONFIG_DIR/moonraker.conf"
+
+if [ "$LANG_CHOICE" = "2" ]; then
+    T_TITLE="=== INSTALLATION POLYORCHESTRA™ SONIC PAD ==="
+    T_STEP1="[1/5] Installation des dépendances via pip..."
+    T_STEP2="[2/5] Génération du fichier polyorchestra.cfg..."
+    T_STEP3="[3/5] Ajout au gestionnaire de mise à jour Moonraker..."
+    T_STEP4="[4/5] Détection automatique du port..."
+    T_STEP5="[5/5] Démarrage du service"
+    T_DONE="INSTALLATION TERMINÉE POUR L'INSTANCE : $INSTANCE"
+else
+    T_TITLE="=== POLYORCHESTRA™ SONIC PAD INSTALLATION ==="
+    T_STEP1="[1/5] Installing dependencies via pip..."
+    T_STEP2="[2/5] Generating polyorchestra.cfg file..."
+    T_STEP3="[3/5] Adding to Moonraker Update Manager..."
+    T_STEP4="[4/5] Automatic port detection..."
+    T_STEP5="[5/5] Starting service"
+    T_DONE="INSTALLATION COMPLETE FOR INSTANCE: $INSTANCE"
+fi
+
+echo -e "${BLUE}$T_TITLE${NC}"
+
+echo -e "\n${GREEN}$T_STEP1${NC}"
 pip3 install requests websocket-client --disable-pip-version-check 2>/dev/null || true
 
-echo -e "${GREEN}[2/5] Generating polyorchestra.cfg file...${NC}"
+echo -e "${GREEN}$T_STEP2${NC}"
 if [ -d "$CONFIG_DIR" ]; then
     POLY_CFG_PATH="$CONFIG_DIR/polyorchestra.cfg"
 
@@ -99,14 +123,9 @@ if [ -d "$CONFIG_DIR" ]; then
 #     SET_DISPLAY_TEXT MSG="M600"
 #     PAUSE
 EOF
-    echo -e "${YELLOW}File created at: $POLY_CFG_PATH${NC}"
-else
-    echo -e "${YELLOW}Warning: Config directory not found at $CONFIG_DIR${NC}"
 fi
 
-echo -e "${GREEN}[3/5] Adding to Moonraker Update Manager...${NC}"
-MOONRAKER_CONF="$CONFIG_DIR/moonraker.conf"
-
+echo -e "${GREEN}$T_STEP3${NC}"
 if [ -f "$MOONRAKER_CONF" ]; then
     if ! grep -q "\[update_manager polyorchestra\]" "$MOONRAKER_CONF"; then
         cat >> "$MOONRAKER_CONF" << EOF
@@ -119,32 +138,40 @@ primary_branch: main
 install_script: install_sonicpad.sh
 is_system_service: False
 EOF
-        echo -e "${YELLOW}Moonraker updated. Restarting Moonraker...${NC}"
         /etc/init.d/S56moonraker restart 2>/dev/null || true
     fi
 fi
 
-echo -e "${GREEN}[4/5] Creating init.d background service...${NC}"
+echo -e "${GREEN}$T_STEP4${NC}"
+PORT="7125"
+if [ -f "$MOONRAKER_CONF" ]; then
+    DETECTED_PORT=$(grep -E "^port\s*:" "$MOONRAKER_CONF" | awk -F ':' '{print $2}' | tr -d '[:space:]')
+    [ ! -z "$DETECTED_PORT" ] && PORT=$DETECTED_PORT
+fi
+echo -e "${YELLOW}Port: $PORT${NC}"
+
+CONFIG_JSON="$PROJECT_DIR/config.json"
+cat > "$CONFIG_JSON" << EOF
+{
+    "moonraker_host": "127.0.0.1",
+    "moonraker_port": $PORT
+}
+EOF
+
+SERVICE_NAME="polyorchestra${SUFFIX}"
 INIT_FILE="/etc/init.d/$SERVICE_NAME"
+mkdir -p "$LOG_DIR" 2>/dev/null
 
 cat > "$INIT_FILE" << EOF
 #!/bin/sh /etc/rc.common
-
 START=99
 STOP=10
-
 start() {
-    echo "Starting Polyorchestra Bridge..."
-    if [ ! -f "$LOG_FILE" ]; then
-        touch "$LOG_FILE"
-    fi
-    # Lancement en arrière-plan
+    [ ! -f "$LOG_FILE" ] && touch "$LOG_FILE"
     nohup $PYTHON_EXEC -u $PROJECT_DIR/main.py >> $LOG_FILE 2>&1 &
     echo \$! > /var/run/${SERVICE_NAME}.pid
 }
-
 stop() {
-    echo "Stopping Polyorchestra Bridge..."
     if [ -f /var/run/${SERVICE_NAME}.pid ]; then
         kill \$(cat /var/run/${SERVICE_NAME}.pid) 2>/dev/null
         rm /var/run/${SERVICE_NAME}.pid
@@ -152,20 +179,18 @@ stop() {
         killall -9 main.py 2>/dev/null
     fi
 }
-
 restart() {
     stop
     sleep 2
     start
 }
 EOF
-
 chmod +x "$INIT_FILE"
 
-echo -e "${GREEN}[5/5] Starting service...${NC}"
+echo -e "${GREEN}$T_STEP5 ($SERVICE_NAME)...${NC}"
 /etc/init.d/$SERVICE_NAME enable 2>/dev/null || true
 /etc/init.d/$SERVICE_NAME restart
 
 echo -e "${BLUE}====================================================${NC}"
-echo -e "${BLUE}POLYORCHESTRA™ SONIC PAD INSTALLATION COMPLETE !${NC}"
+echo -e "${BLUE}$T_DONE${NC}"
 echo -e "${BLUE}====================================================${NC}"
