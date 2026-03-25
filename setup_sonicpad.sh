@@ -1,10 +1,10 @@
 #!/bin/sh
 
 #
-# Polyorchestra™ Klipper Bridge
+# PolyOrchestra™ Klipper Bridge
 # Copyright (c) 2025-2026 AQ Bros. All rights reserved.
 #
-# "Polyorchestra" is a registered trademark of AQ Bros.
+# "PolyOrchestra" is a registered trademark of AQ Bros.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -23,13 +23,13 @@ echo "2) Français"
 read -p "[1/2] (Default: 1): " LANG_CHOICE
 
 if [ "$LANG_CHOICE" = "2" ]; then
-    L_Q_PRINTER="Quelle imprimante installez-vous ? (1, 2, 3, 4)"
-    L_CHOICE="Votre choix"
+    L_Q_PRINTER="Quel port USB utilisez-vous ? (Si vous n'avez qu'une imprimante, tapez 1)"
+    L_CHOICE="Port USB"
     L_DL="Téléchargement dans"
 else
     LANG_CHOICE="1"
-    L_Q_PRINTER="Which printer are you installing? (1, 2, 3, 4)"
-    L_CHOICE="Your choice"
+    L_Q_PRINTER="Which USB port are you using? (If you have only one printer, press 1)"
+    L_CHOICE="USB Port"
     L_DL="Downloading to"
 fi
 

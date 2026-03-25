@@ -1,10 +1,10 @@
 #!/bin/sh
 
 #
-# Polyorchestra™ Klipper Bridge
+# PolyOrchestra™ Klipper Bridge
 # Copyright (c) 2025-2026 AQ Bros. All rights reserved.
 #
-# "Polyorchestra" is a registered trademark of AQ Bros.
+# "PolyOrchestra" is a registered trademark of AQ Bros.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -39,7 +39,7 @@ if [ "$LANG_CHOICE" = "2" ]; then
     T_STEP3="[3/5] Ajout au gestionnaire de mise à jour Moonraker..."
     T_STEP4="[4/5] Détection automatique du port..."
     T_STEP5="[5/5] Démarrage du service"
-    T_DONE="INSTALLATION TERMINÉE POUR L'INSTANCE : $INSTANCE"
+    T_DONE="INSTALLATION TERMINÉE POUR LE PORT USB : $INSTANCE"
 else
     T_TITLE="=== POLYORCHESTRA™ SONIC PAD INSTALLATION ==="
     T_STEP1="[1/5] Installing dependencies via pip..."
@@ -47,7 +47,7 @@ else
     T_STEP3="[3/5] Adding to Moonraker Update Manager..."
     T_STEP4="[4/5] Automatic port detection..."
     T_STEP5="[5/5] Starting service"
-    T_DONE="INSTALLATION COMPLETE FOR INSTANCE: $INSTANCE"
+    T_DONE="INSTALLATION COMPLETE FOR USB PORT: $INSTANCE"
 fi
 
 echo -e "${BLUE}$T_TITLE${NC}"
