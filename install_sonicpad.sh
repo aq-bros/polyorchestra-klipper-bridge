@@ -39,6 +39,7 @@ if [ "$LANG_CHOICE" = "2" ]; then
     T_STEP3="[3/4] Détection automatique du port..."
     T_STEP4="[4/4] Démarrage du service"
     T_DONE="INSTALLATION TERMINÉE POUR LE PORT USB : $INSTANCE"
+    T_KEEP_CONFIG="Configuration PolyOrchestra conservée !"
 else
     T_TITLE="=== POLYORCHESTRA™ SONIC PAD INSTALLATION ==="
     T_STEP1="[1/4] Installing dependencies via pip..."
@@ -46,6 +47,7 @@ else
     T_STEP3="[3/4] Automatic port detection..."
     T_STEP4="[4/4] Starting service"
     T_DONE="INSTALLATION COMPLETE FOR USB PORT: $INSTANCE"
+    T_KEEP_CONFIG="PolyOrchestra configuration kept!"
 fi
 
 echo -e "${BLUE}$T_TITLE${NC}"
@@ -132,12 +134,17 @@ fi
 echo -e "${YELLOW}Port: $PORT${NC}"
 
 CONFIG_JSON="$PROJECT_DIR/config.json"
-cat > "$CONFIG_JSON" << EOF
+
+if [ ! -f "$CONFIG_JSON" ]; then
+    cat > "$CONFIG_JSON" << EOF
 {
     "moonraker_host": "127.0.0.1",
     "moonraker_port": $PORT
 }
 EOF
+else
+    echo -e "${YELLOW}$T_KEEP_CONFIG${NC}"
+fi
 
 SERVICE_NAME="polyorchestra${SUFFIX}"
 INIT_FILE="/etc/init.d/$SERVICE_NAME"
