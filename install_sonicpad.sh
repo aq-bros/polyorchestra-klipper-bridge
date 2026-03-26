@@ -168,7 +168,7 @@ START=99
 STOP=10
 start() {
     [ ! -f "$LOG_FILE" ] && touch "$LOG_FILE"
-    nohup $PYTHON_EXEC -u $PROJECT_DIR/main.py >> $LOG_FILE 2>&1 &
+    $PYTHON_EXEC -u $PROJECT_DIR/main.py >> $LOG_FILE 2>&1 &
     echo \$! > /var/run/${SERVICE_NAME}.pid
 }
 stop() {
