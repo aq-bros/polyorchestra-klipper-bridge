@@ -37,6 +37,7 @@ calibrating_profile_id = None
 is_suspended_billing = False
 sync_interval = 5.0
 global_history_map = {}
+IS_CREALITY_OS = "/mnt/UDISK" in CURRENT_DIR
 
 cache = {
     "status": "", "progress": -1,
@@ -223,8 +224,6 @@ def upload_file_list(delay_start=False):
     try:
         host = config.get("moonraker_host", "127.0.0.1")
         port = config.get("moonraker_port", 7125)
-
-        moonraker_ready = False
         limit = 2000 if is_first_massive_sync else 50
 
         for attempt in range(3):
@@ -243,7 +242,6 @@ def upload_file_list(delay_start=False):
                                 "status": mapped_status,
                                 "date": datetime.fromtimestamp(end_time).isoformat() if end_time else None
                             }
-                    moonraker_ready = True
                     break
             except:
                 pass
@@ -942,7 +940,8 @@ def check_commands_loop():
                         is_paired = False
                     else:
                         if not is_paired:
-                            send_gcode("RESPOND TYPE=command MSG='action:prompt_end'")
+                            if not IS_CREALITY_OS:
+                                send_gcode("RESPOND TYPE=command MSG='action:prompt_end'")
                             send_gcode("M117 >> PolyOrchestra Linked!")
                             reset_cache_values()
                             detect_and_upload_capabilities()
@@ -992,10 +991,12 @@ def on_open(ws):
     if pending_code:
         def show_code():
             time.sleep(3)
-            full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
+            if IS_CREALITY_OS:
+                full_script = f"M117 Code: {pending_code}"
+            else:
+                full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
             if ws_app and ws_app.sock and ws_app.sock.connected:
-                ws_app.send(json.dumps(
-                    {"jsonrpc": "2.0", "method": "printer.gcode.script", "params": {"script": full_script}, "id": 999}))
+                ws_app.send(json.dumps({"jsonrpc": "2.0", "method": "printer.gcode.script", "params": {"script": full_script}, "id": 999}))
 
         threading.Thread(target=show_code, daemon=True).start()
 
