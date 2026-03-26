@@ -227,7 +227,7 @@ def upload_file_list(delay_start=False):
         moonraker_ready = False
         limit = 2000 if is_first_massive_sync else 50
 
-        for attempt in range(10):
+        for attempt in range(3):
             try:
                 url_history = f"http://{host}:{port}/server/history/list?limit={limit}"
                 r_hist = requests.get(url_history, timeout=10)
@@ -248,9 +248,6 @@ def upload_file_list(delay_start=False):
             except:
                 pass
             time.sleep(2)
-
-        if not moonraker_ready:
-            return
 
         existing_files_map = None
         for attempt in range(30):
@@ -298,12 +295,10 @@ def upload_file_list(delay_start=False):
                             requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True}, headers=get_headers(), timeout=2)
                             sync_ui_triggered = True
                         except: pass
-
                     try:
                         url_cloud = f"{config['supabase_url']}/functions/v1/upload-thumbnail"
                         requests.delete(url_cloud, json={"filename": db_filename, "folder_id": config['device_id']},
                                         headers=get_headers(), timeout=5)
-
                         url_rpc_del = f"{config['supabase_url']}/rest/v1/rpc/delete_printer_file"
                         payload_del = {
                             "p_target_device_id": config['device_id'],
@@ -329,10 +324,8 @@ def upload_file_list(delay_start=False):
                 if total_files > 0:
                     current_percent = int((processed_files / total_files) * 100)
                     rounded_percent = (current_percent // 10) * 10
-
                     if processed_files == total_files:
                         rounded_percent = 100
-
                     if rounded_percent >= last_reported_percent + 10:
                         last_reported_percent = rounded_percent
                         try:
@@ -343,20 +336,6 @@ def upload_file_list(delay_start=False):
                 filename = f.get("filename")
                 if not filename: filename = f.get("path")
                 current_modified_ts = f.get("modified")
-
-                if filename in existing_files_map:
-                    known = existing_files_map[filename]
-                    known_ts = known["modified"]
-                    if known_ts is not None:
-                        diff = abs(float(known_ts) - float(current_modified_ts))
-                        if diff < 2.0 and not is_first_massive_sync:
-                            continue
-
-                if not sync_ui_triggered:
-                    try:
-                        requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True}, headers=get_headers(), timeout=2)
-                        sync_ui_triggered = True
-                    except: pass
 
                 file_history = global_history_map.get(filename)
                 if not file_history:
@@ -376,13 +355,28 @@ def upload_file_list(delay_start=False):
                     "filament_used": 0, "filament_weight": 0, "estimated_time": 0, "layer_count": 0,
                     "object_height": 0, "layer_height": 0, "first_layer_height": 0,
                     "temp_bed": 0, "temp_nozzle": 0, "nozzle_diameter": 0.4,
-                    "thumbnail_url": existing_files_map.get(filename, {}).get("thumbnail_url"),
+                    "thumbnail_url": existing_files_map.get(filename, {}).get("thumbnail_url") if existing_files_map else None,
                     "slicer_name": "Unknown",
                     "slicer_version": "",
                     "last_print_status": file_history["status"],
                     "last_print_date": file_history["date"],
                     "is_syncing": False
                 }
+
+                if filename in existing_files_map:
+                    known = existing_files_map[filename]
+                    known_ts = known.get("modified")
+                    if known_ts is not None and current_modified_ts is not None:
+                        diff = abs(float(known_ts) - float(current_modified_ts))
+                        if diff < 2.0 and not is_first_massive_sync:
+                            clean_list.append(file_obj)
+                            continue
+
+                if not sync_ui_triggered:
+                    try:
+                        requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True}, headers=get_headers(), timeout=2)
+                        sync_ui_triggered = True
+                    except: pass
 
                 try:
                     meta_url = f"http://{host}:{port}/server/files/metadata?filename={filename}"

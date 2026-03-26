@@ -34,19 +34,17 @@ MOONRAKER_CONF="$CONFIG_DIR/moonraker.conf"
 
 if [ "$LANG_CHOICE" = "2" ]; then
     T_TITLE="=== INSTALLATION POLYORCHESTRA™ SONIC PAD ==="
-    T_STEP1="[1/5] Installation des dépendances via pip..."
-    T_STEP2="[2/5] Génération du fichier polyorchestra.cfg..."
-    T_STEP3="[3/5] Ajout au gestionnaire de mise à jour Moonraker..."
-    T_STEP4="[4/5] Détection automatique du port..."
-    T_STEP5="[5/5] Démarrage du service"
+    T_STEP1="[1/4] Installation des dépendances via pip..."
+    T_STEP2="[2/4] Génération du fichier polyorchestra.cfg..."
+    T_STEP3="[3/4] Détection automatique du port..."
+    T_STEP4="[4/4] Démarrage du service"
     T_DONE="INSTALLATION TERMINÉE POUR LE PORT USB : $INSTANCE"
 else
     T_TITLE="=== POLYORCHESTRA™ SONIC PAD INSTALLATION ==="
-    T_STEP1="[1/5] Installing dependencies via pip..."
-    T_STEP2="[2/5] Generating polyorchestra.cfg file..."
-    T_STEP3="[3/5] Adding to Moonraker Update Manager..."
-    T_STEP4="[4/5] Automatic port detection..."
-    T_STEP5="[5/5] Starting service"
+    T_STEP1="[1/4] Installing dependencies via pip..."
+    T_STEP2="[2/4] Generating polyorchestra.cfg file..."
+    T_STEP3="[3/4] Automatic port detection..."
+    T_STEP4="[4/4] Starting service"
     T_DONE="INSTALLATION COMPLETE FOR USB PORT: $INSTANCE"
 fi
 
@@ -126,23 +124,6 @@ EOF
 fi
 
 echo -e "${GREEN}$T_STEP3${NC}"
-if [ -f "$MOONRAKER_CONF" ]; then
-    if ! grep -q "\[update_manager polyorchestra\]" "$MOONRAKER_CONF"; then
-        cat >> "$MOONRAKER_CONF" << EOF
-
-[update_manager polyorchestra]
-type: git_repo
-path: $PROJECT_DIR
-origin: https://github.com/aq-bros/polyorchestra-klipper-bridge.git
-primary_branch: main
-install_script: install_sonicpad.sh
-is_system_service: False
-EOF
-        /etc/init.d/S56moonraker restart 2>/dev/null || true
-    fi
-fi
-
-echo -e "${GREEN}$T_STEP4${NC}"
 PORT="7125"
 if [ -f "$MOONRAKER_CONF" ]; then
     DETECTED_PORT=$(grep -E "^port\s*:" "$MOONRAKER_CONF" | awk -F ':' '{print $2}' | tr -d '[:space:]')
@@ -187,7 +168,7 @@ restart() {
 EOF
 chmod +x "$INIT_FILE"
 
-echo -e "${GREEN}$T_STEP5 ($SERVICE_NAME)...${NC}"
+echo -e "${GREEN}$T_STEP4 ($SERVICE_NAME)...${NC}"
 /etc/init.d/$SERVICE_NAME enable 2>/dev/null || true
 /etc/init.d/$SERVICE_NAME restart
 
