@@ -69,9 +69,11 @@ last_file_action_ts = 0
 current_file_metadata_time = 0
 current_file_metadata_filament = 0
 
+
 def log(msg):
     if not PRODUCTION_MODE:
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {msg}", flush=True)
+
 
 def detect_moonraker_port():
     home = os.path.expanduser("~")
@@ -91,6 +93,7 @@ def detect_moonraker_port():
                 pass
     return 7125
 
+
 def load_config():
     global config
     try:
@@ -99,7 +102,8 @@ def load_config():
 
         if not config.get("supabase_url"):
             config["supabase_url"] = "https://phciwqkkvtqbiuijhctg.supabase.co"
-            config["supabase_key"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoY2l3cWtrdnRxYml1aWpoY3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NTIxNzAsImV4cCI6MjA4MTEyODE3MH0.uMhTH6mp0o7F4eUCFwFHPxfgkFMsZSJAiTNTLAZZL_w"
+            config[
+                "supabase_key"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoY2l3cWtrdnRxYml1aWpoY3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NTIxNzAsImV4cCI6MjA4MTEyODE3MH0.uMhTH6mp0o7F4eUCFwFHPxfgkFMsZSJAiTNTLAZZL_w"
             save_config()
     except:
         detected_port = detect_moonraker_port()
@@ -111,11 +115,13 @@ def load_config():
         }
         save_config()
 
+
 def save_config():
     with open(CONFIG_PATH, "w") as f:
         json.dump(config, f, indent=4)
         f.flush()
         os.fsync(f.fileno())
+
 
 def get_headers(json_content=True):
     h = {
@@ -127,6 +133,7 @@ def get_headers(json_content=True):
         h["Content-Type"] = "application/json"
     return h
 
+
 def safe_int(val):
     try:
         if val is None: return 0
@@ -134,10 +141,12 @@ def safe_int(val):
     except:
         return 0
 
+
 def send_gcode(gcode):
     if ws_app and ws_app.sock and ws_app.sock.connected:
         ws_app.send(json.dumps({"jsonrpc": "2.0", "method": "printer.gcode.script", "params": {"script": gcode},
                                 "id": random.randint(1, 10000)}))
+
 
 def ensure_registration():
     global config, pending_code
@@ -160,6 +169,7 @@ def ensure_registration():
     except:
         return False
 
+
 def reset_cache_values():
     global cache, current_file_metadata_time, current_file_metadata_filament
     cache["temp_bed"] = -999
@@ -170,6 +180,7 @@ def reset_cache_values():
     cache["raw_file_progress"] = 0
     current_file_metadata_time = 0
     current_file_metadata_filament = 0
+
 
 def fetch_current_file_metadata(filename):
     global current_file_metadata_time, current_file_metadata_filament
@@ -191,6 +202,7 @@ def fetch_current_file_metadata(filename):
     except:
         pass
 
+
 def update_file_status_in_db(filename, new_status):
     global global_history_map
     if not config.get("device_id") or not filename: return
@@ -210,6 +222,7 @@ def update_file_status_in_db(filename, new_status):
             }
     except:
         pass
+
 
 def upload_file_list(delay_start=False):
     global global_history_map
@@ -251,7 +264,8 @@ def upload_file_list(delay_start=False):
         for attempt in range(30):
             try:
                 url_get_rpc = f"{config['supabase_url']}/rest/v1/rpc/get_device_file_index"
-                r_exist = requests.post(url_get_rpc, json={"target_device_id": config['device_id']}, headers=get_headers(), timeout=5)
+                r_exist = requests.post(url_get_rpc, json={"target_device_id": config['device_id']},
+                                        headers=get_headers(), timeout=5)
 
                 if r_exist.status_code == 200:
                     existing_files_map = {}
@@ -290,9 +304,11 @@ def upload_file_list(delay_start=False):
                 if db_filename not in current_filenames_set:
                     if not sync_ui_triggered:
                         try:
-                            requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True}, headers=get_headers(), timeout=2)
+                            requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True},
+                                          headers=get_headers(), timeout=2)
                             sync_ui_triggered = True
-                        except: pass
+                        except:
+                            pass
                     try:
                         url_cloud = f"{config['supabase_url']}/functions/v1/upload-thumbnail"
                         requests.delete(url_cloud, json={"filename": db_filename, "folder_id": config['device_id']},
@@ -313,7 +329,8 @@ def upload_file_list(delay_start=False):
 
             try:
                 url_prog = f"{config['supabase_url']}/rest/v1/rpc/update_sync_progress"
-                requests.post(url_prog, json={"p_device_id": config['device_id'], "p_progress": 0}, headers=get_headers(), timeout=2)
+                requests.post(url_prog, json={"p_device_id": config['device_id'], "p_progress": 0},
+                              headers=get_headers(), timeout=2)
             except:
                 pass
 
@@ -327,7 +344,9 @@ def upload_file_list(delay_start=False):
                     if rounded_percent >= last_reported_percent + 10:
                         last_reported_percent = rounded_percent
                         try:
-                            requests.post(url_prog, json={"p_device_id": config['device_id'], "p_progress": rounded_percent}, headers=get_headers(), timeout=2)
+                            requests.post(url_prog,
+                                          json={"p_device_id": config['device_id'], "p_progress": rounded_percent},
+                                          headers=get_headers(), timeout=2)
                         except:
                             pass
 
@@ -353,7 +372,8 @@ def upload_file_list(delay_start=False):
                     "filament_used": 0, "filament_weight": 0, "estimated_time": 0, "layer_count": 0,
                     "object_height": 0, "layer_height": 0, "first_layer_height": 0,
                     "temp_bed": 0, "temp_nozzle": 0, "nozzle_diameter": 0.4,
-                    "thumbnail_url": existing_files_map.get(filename, {}).get("thumbnail_url") if existing_files_map else None,
+                    "thumbnail_url": existing_files_map.get(filename, {}).get(
+                        "thumbnail_url") if existing_files_map else None,
                     "slicer_name": "Unknown",
                     "slicer_version": "",
                     "last_print_status": file_history["status"],
@@ -372,9 +392,11 @@ def upload_file_list(delay_start=False):
 
                 if not sync_ui_triggered:
                     try:
-                        requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True}, headers=get_headers(), timeout=2)
+                        requests.post(url_start, json={"target_device_id": config['device_id'], "sync_state": True},
+                                      headers=get_headers(), timeout=2)
                         sync_ui_triggered = True
-                    except: pass
+                    except:
+                        pass
 
                 try:
                     meta_url = f"http://{host}:{port}/server/files/metadata?filename={filename}"
@@ -434,6 +456,7 @@ def upload_file_list(delay_start=False):
                 pass
         sync_lock.release()
 
+
 def detect_and_upload_capabilities():
     if not config.get("device_id"): return
     host = config.get("moonraker_host", "127.0.0.1")
@@ -486,9 +509,11 @@ def detect_and_upload_capabilities():
             caps["leveling_method"] = "screws"
 
         url_rpc = f"{config['supabase_url']}/rest/v1/rpc/update_printer_capabilities"
-        requests.post(url_rpc, json={"target_device_id": config['device_id'], "caps": caps}, headers=get_headers(), timeout=5)
+        requests.post(url_rpc, json={"target_device_id": config['device_id'], "caps": caps}, headers=get_headers(),
+                      timeout=5)
     except:
         pass
+
 
 def send_print_stats_success(duration):
     if not config.get("device_id") or not is_paired or duration < 60: return
@@ -498,6 +523,7 @@ def send_print_stats_success(duration):
                       timeout=5)
     except:
         pass
+
 
 def send_history_point():
     if not config.get("device_id") or not is_paired: return
@@ -517,15 +543,18 @@ def send_history_point():
     except:
         pass
 
+
 def send_rpc_status_update(payload_data):
     if not config.get("device_id"): return
     url = f"{config['supabase_url']}/rest/v1/rpc/update_printer_status"
     try:
-        r = requests.post(url, json={"target_device_id": config['device_id'], "payload": payload_data}, headers=get_headers(), timeout=5)
+        r = requests.post(url, json={"target_device_id": config['device_id'], "payload": payload_data},
+                          headers=get_headers(), timeout=5)
         if r.status_code not in [200, 204]:
             log(f"Refus de Supabase ({r.status_code}) : {r.text}")
     except Exception as e:
         log(f"Erreur réseau vers Supabase : {e}")
+
 
 def ack_command_rpc(cmd_id):
     if not config.get("device_id"): return
@@ -534,6 +563,7 @@ def ack_command_rpc(cmd_id):
         requests.post(url, json={"target_id": cmd_id}, headers=get_headers(), timeout=5)
     except:
         pass
+
 
 def cleanup_on_startup():
     load_config()
@@ -549,6 +579,7 @@ def cleanup_on_startup():
     except:
         pass
 
+
 def update_supabase(payload):
     if not config.get("device_id") or not is_paired:
         log("Envoi annulé : Bridge non appairé ou ID manquant.")
@@ -556,6 +587,7 @@ def update_supabase(payload):
     log(f"📡 Envoi des données (Statut: {payload.get('status')})...")
     send_rpc_status_update(payload)
     threading.Thread(target=send_rpc_status_update, args=(payload,), daemon=True).start()
+
 
 def calculate_final_progress(c, meta_time, meta_filament):
     if c["status"] != "printing": return c.get("progress", 0)
@@ -566,6 +598,7 @@ def calculate_final_progress(c, meta_time, meta_filament):
     if meta_time > 0 and c.get("print_duration", 0) > 0:
         return min(99, int((c["print_duration"] / meta_time) * 100))
     return c.get("raw_file_progress", 0)
+
 
 def process_data(status_data):
     global cache, last_sent_cache, last_heartbeat, last_z_update_ts, last_history_ts, force_full_sync, last_print_update_ts, current_file_metadata_time, current_file_metadata_filament, last_api_call_ts, is_suspended_billing, sync_interval
@@ -747,6 +780,7 @@ def process_data(status_data):
             threading.Thread(target=send_history_point, daemon=True).start()
             last_history_ts = now
 
+
 def handle_command(cmd_row):
     global cache, last_file_action_ts
     cmd = cmd_row.get("command", "").upper()
@@ -803,7 +837,6 @@ def handle_command(cmd_row):
             try:
                 r_check = requests.get(check_url, timeout=2)
                 if r_check.status_code != 200:
-
                     url_rpc_rename = f"{config['supabase_url']}/rest/v1/rpc/rename_printer_file"
                     payload_rename = {
                         "p_target_device_id": config['device_id'],
@@ -899,7 +932,8 @@ def handle_command(cmd_row):
         parts = []
         if pl.get("velocity"): parts.append(f"VELOCITY={int(pl.get('velocity'))}")
         if pl.get("accel"): parts.append(f"ACCEL={int(pl.get('accel'))}")
-        if pl.get("minimum_cruise_ratio") is not None: parts.append(f"MINIMUM_CRUISE_RATIO={float(pl.get('minimum_cruise_ratio'))}")
+        if pl.get("minimum_cruise_ratio") is not None: parts.append(
+            f"MINIMUM_CRUISE_RATIO={float(pl.get('minimum_cruise_ratio'))}")
         if pl.get("scv"): parts.append(f"SQUARE_CORNER_VELOCITY={pl.get('scv')}")
         if parts: send_gcode(f"SET_VELOCITY_LIMIT {' '.join(parts)}")
     elif cmd == "START_PRINT":
@@ -909,6 +943,7 @@ def handle_command(cmd_row):
     elif cmd == "GCODE":
         if pl.get("value"): send_gcode(pl.get("value"))
 
+
 def refresh_moonraker_data(socket):
     socket.send(json.dumps({"jsonrpc": "2.0", "method": "printer.objects.query", "params": {"objects": {
         "print_stats": None, "virtual_sdcard": None, "heater_bed": None, "extruder": None, "fan": None,
@@ -917,6 +952,7 @@ def refresh_moonraker_data(socket):
         "temperature_sensor raspberry_pi": None, "temperature_sensor mcu": None, "display_status": None,
         "webhooks": None
     }}, "id": random.randint(1000, 9999)}))
+
 
 def check_commands_loop():
     global last_user_active_ts, is_paired, force_full_sync, is_suspended_billing, sync_interval
@@ -976,6 +1012,7 @@ def check_commands_loop():
             sleep_time = 10.0
         time.sleep(sleep_time)
 
+
 def on_open(ws):
     ws.send(json.dumps({"jsonrpc": "2.0", "method": "printer.objects.subscribe", "params": {"objects": {
         "print_stats": None, "virtual_sdcard": None, "heater_bed": None, "extruder": None, "fan": None,
@@ -990,15 +1027,20 @@ def on_open(ws):
         threading.Thread(target=upload_file_list, daemon=True).start()
     if pending_code:
         def show_code():
-            time.sleep(3)
-            if IS_CREALITY_OS:
-                full_script = f"M117 Code: {pending_code}"
-            else:
-                full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
-            if ws_app and ws_app.sock and ws_app.sock.connected:
-                ws_app.send(json.dumps({"jsonrpc": "2.0", "method": "printer.gcode.script", "params": {"script": full_script}, "id": 999}))
+            time.sleep(5)
+            while not is_paired and pending_code:
+                if IS_CREALITY_OS:
+                    full_script = f"M117 Code: {pending_code}"
+                else:
+                    full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
+                if ws_app and ws_app.sock and ws_app.sock.connected:
+                    ws_app.send(json.dumps(
+                        {"jsonrpc": "2.0", "method": "printer.gcode.script", "params": {"script": full_script},
+                         "id": random.randint(1000, 9999)}))
+                time.sleep(10)
 
         threading.Thread(target=show_code, daemon=True).start()
+
 
 def on_message(ws, message):
     global calibrating_profile_id, last_file_action_ts
@@ -1030,6 +1072,7 @@ def on_message(ws, message):
     except Exception as e:
         log(f"Erreur interceptée dans on_message : {e}")
 
+
 def connect_to_moonraker():
     global ws_app
     load_config()
@@ -1056,6 +1099,7 @@ def connect_to_moonraker():
         except:
             pass
         time.sleep(5)
+
 
 if __name__ == "__main__":
     if ensure_registration():
