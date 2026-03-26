@@ -95,6 +95,11 @@ def load_config():
     try:
         with open(CONFIG_PATH, "r") as f:
             config = json.load(f)
+
+        if not config.get("supabase_url"):
+            config["supabase_url"] = "https://phciwqkkvtqbiuijhctg.supabase.co"
+            config["supabase_key"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoY2l3cWtrdnRxYml1aWpoY3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NTIxNzAsImV4cCI6MjA4MTEyODE3MH0.uMhTH6mp0o7F4eUCFwFHPxfgkFMsZSJAiTNTLAZZL_w"
+            save_config()
     except:
         detected_port = detect_moonraker_port()
         config = {

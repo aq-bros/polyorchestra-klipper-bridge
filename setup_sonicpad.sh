@@ -20,7 +20,7 @@ echo -e "${GREEN}=== POLYORCHESTRA INSTALLER ===${NC}"
 echo "Select your language / Choisissez votre langue :"
 echo "1) English"
 echo "2) Français"
-read -p "[1/2] (Default: 1): " LANG_CHOICE
+read -p "[1/2] (Default: 1): " LANG_CHOICE </dev/tty
 
 if [ "$LANG_CHOICE" = "2" ]; then
     L_Q_PRINTER="Quel port USB utilisez-vous ? (Si vous n'avez qu'une imprimante, tapez 1)"
@@ -34,7 +34,7 @@ else
 fi
 
 echo -e "\n${YELLOW}$L_Q_PRINTER${NC}"
-read -p "$L_CHOICE [1]: " PRINTER_CHOICE
+read -p "$L_CHOICE [1]: " PRINTER_CHOICE </dev/tty
 
 INSTANCE=${PRINTER_CHOICE:-1}
 DIR_NAME="polyorchestra-bridge-$INSTANCE"
