@@ -442,6 +442,7 @@ def upload_file_list(delay_start=False):
                 except:
                     pass
                 clean_list.append(file_obj)
+                time.sleep(0.5)
 
             if clean_list:
                 url_rpc = f"{config['supabase_url']}/rest/v1/rpc/sync_printer_files"
@@ -985,7 +986,8 @@ def check_commands_loop():
                             force_full_sync = True
                             if ws_app and ws_app.sock and ws_app.sock.connected:
                                 refresh_moonraker_data(ws_app)
-                                threading.Thread(target=upload_file_list, daemon=True).start()
+                                delay = 45 if IS_CREALITY_OS else 5
+                                threading.Thread(target=lambda d=delay: (time.sleep(d), upload_file_list()), daemon=True).start()
                     new_secret = data.get('api_secret')
                     if new_secret and new_secret != config.get('api_secret'):
                         config['api_secret'] = new_secret
@@ -1024,7 +1026,8 @@ def on_open(ws):
     if is_paired:
         threading.Thread(target=lambda: (time.sleep(1), refresh_moonraker_data(ws)), daemon=True).start()
         threading.Thread(target=detect_and_upload_capabilities, daemon=True).start()
-        threading.Thread(target=upload_file_list, daemon=True).start()
+        delay = 45 if IS_CREALITY_OS else 5
+        threading.Thread(target=lambda d=delay: (time.sleep(d), upload_file_list()), daemon=True).start()
     if pending_code:
         def show_code():
             time.sleep(5)
