@@ -1028,22 +1028,24 @@ def on_open(ws):
         threading.Thread(target=detect_and_upload_capabilities, daemon=True).start()
         delay = 45 if IS_CREALITY_OS else 5
         threading.Thread(target=lambda d=delay: (time.sleep(d), upload_file_list()), daemon=True).start()
-    if pending_code:
-        def show_code():
-            time.sleep(5)
-            while not is_paired and pending_code:
+
+    def show_code():
+        time.sleep(5)
+        while not is_paired:
+            if pending_code:
                 if IS_CREALITY_OS:
                     full_script = f"M117 Code: {pending_code}"
                 else:
                     full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
                 if ws_app and ws_app.sock and ws_app.sock.connected:
-                    ws_app.send(json.dumps(
-                        {"jsonrpc": "2.0", "method": "printer.gcode.script", "params": {"script": full_script},
-                         "id": random.randint(1000, 9999)}))
-                time.sleep(10)
-
-        threading.Thread(target=show_code, daemon=True).start()
-
+                    ws_app.send(json.dumps({
+                        "jsonrpc": "2.0",
+                        "method": "printer.gcode.script",
+                        "params": {"script": full_script},
+                        "id": random.randint(1000, 9999)
+                    }))
+            time.sleep(10)
+    threading.Thread(target=show_code, daemon=True).start()
 
 def on_message(ws, message):
     global calibrating_profile_id, last_file_action_ts
