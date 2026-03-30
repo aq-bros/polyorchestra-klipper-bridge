@@ -1033,10 +1033,8 @@ def on_open(ws):
         time.sleep(5)
         while not is_paired:
             if pending_code:
-                if IS_CREALITY_OS:
-                    full_script = f"M117 Code: {pending_code}"
-                else:
-                    full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
+                full_script = f"M117 Code: {pending_code}\nRESPOND TYPE=command MSG=\"action:prompt_begin PolyOrchestra\"\nRESPOND TYPE=command MSG=\"action:prompt_text Code: {pending_code}\"\nRESPOND TYPE=command MSG=\"action:prompt_show\""
+
                 if ws_app and ws_app.sock and ws_app.sock.connected:
                     ws_app.send(json.dumps({
                         "jsonrpc": "2.0",
